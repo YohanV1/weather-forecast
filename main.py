@@ -1,6 +1,7 @@
 import streamlit as st
 import plotly.express as px
 from backend import get_data
+from datetime import date
 
 st.title("Weather Forecast")
 place = st.text_input("Place: ")
@@ -21,9 +22,9 @@ if place:
 
     try:
         filtered_data = get_data(place, days)
+        dates = [lst['dt_txt'] for lst in filtered_data]
         if option == "Temperature":
-            temperatures = [lst['main']['temp']-273.15 for lst in filtered_data]
-            dates = [lst['dt_txt'] for lst in filtered_data]
+            temperatures = [lst['main']['temp'] for lst in filtered_data]
             figure = px.line(x=dates, y=temperatures, labels={"x": "Dates",
                                                               "y": "Temperature (C)"})
             st.plotly_chart(figure)
@@ -33,9 +34,56 @@ if place:
             images = {'Clear': "images/clear.png",
                       'Clouds': "images/cloud.png",
                       'Rain': "images/rain.png", 'Snow': "images/snow.png"}
+
             img_paths = [images[state] for state in sky_condition]
-            st.image(img_paths, width=115)
+
+            img_label = [date(day=int(dates[i][8:10]),
+                       month=int(dates[i][5:7]),
+                       year=int(dates[i][0:4])).
+                  strftime(f'%a, %b %d {dates[i][11:-3]}')
+                         for i in range(days*8)]
+
+            st.image(img_paths, width=115, caption=img_label)
 
     except KeyError:
         st.write("You entered a place that does not exist!")
 
+hide_streamlit_style = """
+                <style>
+                div[data-testid="stToolbar"] {
+                visibility: hidden;
+                height: 0%;
+                position: fixed;
+                }
+                div[data-testid="stDecoration"] {
+                visibility: hidden;
+                height: 0%;
+                position: fixed;
+                }
+                div[data-testid="stStatusWidget"] {
+                visibility: hidden;
+                height: 0%;
+                position: fixed;
+                }
+                #MainMenu {
+                visibility: hidden;
+                height: 0%;
+                }
+                header {
+                visibility: hidden;
+                height: 0%;
+                }
+                footer {
+                visibility: hidden;
+                height: 0%;
+                }
+                footer:after{
+                visibility: visible;
+                content: 'Made by Yohan Vinu';
+                display:block;
+                position:relative;
+                color:grey
+                }
+                </style>
+                """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
